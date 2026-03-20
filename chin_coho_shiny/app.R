@@ -74,7 +74,7 @@ server <- function(input, output, session) {
   # Gray out certain options depending on previous selections.
   # I.e., cannot choose genomic offset scenario when visualizing site coordinates.
   observeEvent(input$metric, {
-    
+     
     if(input$metric == "Genomic offset") {
       enable("off_ssp")
     } else {
