@@ -15,12 +15,23 @@ sites <- readxl::read_excel("data/sample_sites.xlsx") %>%
   # arrange(mLat) %>% 
   arrange(latitude, .by_group = TRUE) %>% 
   arrange(mLat) %>% 
-  mutate(sitenum = row_number())
+  mutate(sitenum = row_number(),
+         alpha = case_when( region_revised %in% unique(region_revised)[seq(from = 1, to = length(unique(region_revised)), by = 2)] ~ 0.9,
+                           !region_revised %in% unique(region_revised)[seq(from = 1, to = length(unique(region_revised)), by = 2)] ~ 1.0))
+
+
+# j <- sites[,c(7,10)] %>% group_by(region_revised) %>%
+#   summarize(mLat2 = mean(mLat)) %>%
+#   arrange(mLat2) %>%
+#   mutate(plot_shape = c(rep(c(21,23), 9), 21)) %>%
+#   mutate(plot_col = hue_pal()(length(unique(sites$region_revised))))
+
 
 #  Arrange regions by average latitude.
 lin <- sites %>% group_by(region_revised) %>% 
   summarize(mLat = mean(latitude)) %>% 
   arrange(mLat)
+
 
 sites$region_revised <- factor(sites$region_revised, levels = lin$region_revised)
 sites$species <- tools::toTitleCase(sites$species)
@@ -72,15 +83,13 @@ scbc_insert <- configure_inset(
 )
 
 coldf <- data.frame(
-  Lineage = unique(as.character(sites$region_revised)),
-  alpha   = c(rep(c(0.3, 1), length(unique(sites$region_revised))/2), 0.3),
-  colour  = hue_pal()(length(unique(sites$region_revised)))
+  region = unique(as.character(sites$region_revised)),
+  alpha = c(rep(c(0.3, 1), length(unique(sites$region_revised))/2), 0.3),
+  colour = hue_pal()(length(unique(sites$region_revised)))
 )
 
-coldf[11:15,3] <- coldf[15:11,3]
-
 (main <- ggplot(data = sitesf) +
-    ggnewscale::new_scale_fill() +
+    # ggnewscale::new_scale_fill() +
     geom_sf_inset(data = st_make_valid(land),
                   linewidth = 1/20,
                   aes(fill = COUNTRY),
@@ -98,7 +107,7 @@ coldf[11:15,3] <- coldf[15:11,3]
                   linewidth = 1/20,
                   fill = NA,
                   show.legend = FALSE) +
-    geom_sf_inset( map_base = "clip", size = NA) +
+    geom_sf_inset(map_base = "clip", size = NA) +
     ggnewscale::new_scale_fill() +
     geom_inset_frame(lines.aes = list(linetype = 2)) +
     coord_sf_inset(xlim = c(min(sites$longitude), max(sites$longitude)), 
@@ -127,6 +136,7 @@ coldf[11:15,3] <- coldf[15:11,3]
       stat = "sf_coordinates_inset"
     ) +
     scale_fill_manual(values = alpha(c(coldf$colour), coldf$alpha)) +
+    # scale_fill_manual(values = alpha(c(sites$plot_col), sites$alpha)) +
     theme(panel.grid = element_blank(), 
           panel.background = element_rect(fill = alpha("skyblue", 1/10)),
           panel.border = element_rect(color = "black", fill = NA),
@@ -151,7 +161,7 @@ coldf[11:15,3] <- coldf[15:11,3]
                inherit.aes = FALSE,
                show.legend = TRUE) +
     ggnewscale::new_scale_fill() +
-    scale_fill_manual(values = c(coldf$colour)) +
+    scale_fill_manual(values = c(sites$plot_col)) +
     labs(x = NULL, y = NULL) +
     ggspatial::annotation_scale(location = "tl", 
                                 width_hint = 1/10))
@@ -159,8 +169,6 @@ coldf[11:15,3] <- coldf[15:11,3]
 (fw <- main + facet_wrap(~ species, nrow = 1))
 
 ggsave("plots/coho_chinook_lcwgs_map.tiff", dpi = 300, width = 14, height = 7, bg = "white")
-
-# ggsave("plots/coho_chinook_lcwgs_map_inset.tiff", dpi = 300, width = 14, height = 7, bg = "white")
 
 # Add another inset, but this one is of North America.
 # Download low-res country outlines.

@@ -12,13 +12,13 @@ sites <- readxl::read_excel("data/sample_sites.xlsx") %>%
   arrange(mLat)
 
 # Arrange lineages by average latitude.
-lin <- sites %>% group_by(Lineage) %>%
-  summarize(mLat = mean(Latitude)) %>%
+lin <- sites %>% group_by(region_revised) %>%
+  summarize(mLat = mean(latitude)) %>%
   arrange(mLat)
 
 sites <- merge(sites, lin) %>%
-  arrange(mLat, Latitude) %>%
-  mutate(Lineage = factor(Lineage, levels = lin$Lineage)) %>%
+  arrange(mLat, latitude) %>%
+  mutate(region_revised = factor(region_revised, levels = lin$region_revised)) %>%
   rownames_to_column("sitenum") %>% 
   mutate(sitenum = as.numeric(sitenum))
 
@@ -129,4 +129,14 @@ pop_pcs <- pca_dat %>% group_by(Pop) %>%
             PC2 = round(mean(PC2), 5))
 
 write.csv(pop_pcs, "data/pop_pcas_n106.csv", row.names = F)
+
+# -------------------------------------------------------------------------
+
+cov <- eigen(read.table("data/pca_data/chinook_angsd_n819.cov"))$values
+  `colnames<-`(., gsub("V", "PC", colnames(.)))
+
+xpc <- sprintf("%0.1f", sum(cov[["PC2"]])/sum(cov))
+
+
+
 

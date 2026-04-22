@@ -8,7 +8,7 @@ chin_off   <- read.csv("data/GOs/chinook_offset_19bio3SD_afsGT_2pca_n819.csv")
 chinook <- merge(chin_sites, chin_off)
 
 coho_sites <- read.csv("data/coho_site_info.csv")
-coho_off   <- read.csv("data/GOs/coho_offset_19bio3SD_afsGTs_2pca_n650.csv")
+coho_off   <- read.csv("data/GOs/coho_offset_19bio3SD_afsGTs_1pca_n650.csv")
 coho <- merge(coho_sites, coho_off)
 
 
@@ -125,7 +125,7 @@ offset_plot <- \(df, variable, cgr_rev, plot_title, abs_cols, brks, rast, LP, rb
                       cgr_rev = FALSE, abs_cols = T, brks = 4, 
                       plot_title = "Genomic offset (ssp85)",
                       LP = c(0.01, 2/3), rb = FALSE))
-ggsave("plots/coho_GO85_19bio3RDA3SD2PCA_afsGT_n650.tiff", bg = 'white',
+ggsave("plots/coho_GO85_19bio3RDA3SD1PCA_afsGT_n650.tiff", bg = 'white',
        dpi = 300, width = 8, height = 6)
 
 (coho45 <- offset_plot(coho, variable = go45, rast = f45_bio$bio05,

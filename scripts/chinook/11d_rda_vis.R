@@ -35,7 +35,7 @@ eigv <- read.delim("data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/rda_eigv.
 # Function for visualizing RDA w/ ggplot + tidyverse functions. 
 rda_biplot <- \(x, y) {
   
-  scalar <- 40
+  scalar <- 33
   
   varx <- paste0(text = enquo(x), " (" , sprintf("%0.1f", 100*c(eigv %>% dplyr::select(1) %>% .[2,])), "%)")[2]
   vary <- paste0(text = enquo(y), " (" , sprintf("%0.1f", 100*c(eigv %>% dplyr::select(2) %>% .[2,])), "%)")[2]
@@ -44,14 +44,14 @@ rda_biplot <- \(x, y) {
     label_x = RDA1 * (scalar + 1),
     label_y = RDA2 * (scalar + 1),
     angle = atan2(RDA2*scalar, RDA1*scalar)*180/pi) %>% 
-    mutate(angle = ifelse(angle > 90 | angle < -90, angle + 180, angle))
+    mutate(label_y = ifelse(angle > 90 | angle < -90, label_y + 1/2, label_y)) %>% 
+    mutate(angle = ifelse(angle > 90 | angle < -90, angle + 180, angle)) 
      
   ggplot() +
     theme_bw() +
     labs(x = varx, y = vary) +
     theme(legend.position = "right",
           legend.title = element_blank(),
-          # legend.position.inside = c(0.05, 0.11),
           legend.background = element_blank()) +
     geom_segment(data = bio_scores,
                  aes(x = 0, y = 0,
@@ -82,9 +82,11 @@ rda_biplot <- \(x, y) {
 }
 
 # Plot biplot.
-(rda12 <- rda_biplot(x = RDA1, y = RDA2) +  scale_x_continuous(expand = 0.12))
+(rda12 <- rda_biplot(x = RDA1, y = RDA2) +
+    scale_x_continuous(expand = expansion(mult = c(0.05, 0.15))))
 
 ggsave("plots/chinook_afsGT_indvbio43RDA3SDbiplot.tiff", 
        dpi = 300, width = 8, height = 6)
 
+saveRDS(rda12, "data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/rda12_biplot.RDS")
 

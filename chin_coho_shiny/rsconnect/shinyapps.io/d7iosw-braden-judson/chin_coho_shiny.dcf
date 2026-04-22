@@ -5,7 +5,7 @@ account: d7iosw-braden-judson
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 16947676
-bundleId: 11738686
+bundleId: 11749678
 url: https://d7iosw-braden-judson.shinyapps.io/chin_coho_shiny/
 version: 1
 asMultiple: FALSE

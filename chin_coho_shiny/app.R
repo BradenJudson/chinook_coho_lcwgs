@@ -1,16 +1,6 @@
 library(shiny); library(plotly); library(readr);  library(tidyverse)
 library(ggnewscale); library(shinyjs); library(heatmaply); library(sf)
 
-
-# -------------------------------------------------------------------------
-
-# TO DO
-
-# % VAR explained for PAC axes are identical for GLs and imputed currently
-
-
-# -------------------------------------------------------------------------
-
 coastline <- st_read("data/simplified_coastline.shp")
 
 # Define UI for application that draws a histogram
@@ -135,35 +125,34 @@ server <- function(input, output, session) {
     
     if(input$species == "Chinook") {
       
-      if(input$genotypes == "Imputed genotypes") {
+      if(input$genotypes == "Imputed") {
         
         k <- read_tsv("data/chinook_imputed_n819.eigenval", col_names = "eigenval") %>% 
           mutate(axis = as.numeric(rownames(.)),
                  PC = paste0("PC", axis)) %>%
           arrange(axis) %>%
-          mutate(var_exp = round(100*eigenval/sum(eigenval), 2)) } else
+          mutate(var_exp = format(round(100*eigenval/sum(eigenval), 2), nsmall = 2))
+        
+          } else
             
-            k <- read_tsv("data/chinook_imputed_n819.eigenval", col_names = "eigenval") %>% 
-              mutate(axis = as.numeric(rownames(.)),
-                     PC = paste0("PC", axis)) %>%
-              arrange(axis) %>%
-              mutate(var_exp = round(100*eigenval/sum(eigenval), 2))
+        k <- data.frame(eigenval = eigen(read.table("data/chinook_angsd_n819.cov"))$values) %>% 
+              rownames_to_column("PC") %>% mutate(PC = paste0("PC", PC)) %>% 
+              mutate(var_exp = format(round(100*eigenval/sum(eigenval), 2), nsmall = 2))
+          
+           } else {
       
-    } else {
-      
-      if(input$genotypes == "Imputed genotypes") {
+      if(input$genotypes == "Imputed") {
         
         k <- read_tsv("data/coho_imputed_pca_n650.eigenval", col_names = "eigenval") %>% 
           mutate(axis = as.numeric(rownames(.)),
                  PC = paste0("PC", axis)) %>%
           arrange(axis) %>%
-          mutate(var_exp = round(100*eigenval/sum(eigenval), 2)) } else
+          mutate(var_exp = format(round(100*eigenval/sum(eigenval), 2), nsmall = 2)) } else
             
-            k <- read_tsv("data/chinook_imputed_n819.eigenval", col_names = "eigenval") %>% 
-              mutate(axis = as.numeric(rownames(.)),
-                     PC = paste0("PC", axis)) %>%
-              arrange(axis) %>%
-              mutate(var_exp = round(100*eigenval/sum(eigenval), 2))
+        k <- data.frame(eigenval = eigen(read.table("data/coho_angsd_n650.cov"))$values) %>% 
+              rownames_to_column("PC") %>% mutate(PC = paste0("PC", PC)) %>% 
+              mutate(var_exp = format(round(100*eigenval/sum(eigenval), 2), nsmall = 2))
+       
     }
     
     return(k)
@@ -265,7 +254,13 @@ hets <- do.call("rbind", list(
 
 nuc <- do.call("rbind", list(
   read.csv("data/chinook_imputed_pi_n106.csv") %>% 
-    mutate(species = "Chinook", genotypes = "Imputed genotypes")
+    mutate(species = "Chinook", genotypes = "Imputed genotypes"),
+  read.csv("data/coho_imputed_pi_n83.csv") %>% 
+    mutate(species = "Coho", genotypes = "Imputed genotypes"),
+  read.csv("data/coho_likelihoods_pi_n83.csv") %>% 
+    mutate(species = "Coho", genotypes = "Genotype likelihoods"),
+  read.csv("data/chin_likelihoods_pi_n106.csv") %>% 
+    mutate(species = "Chinook", genotypes = "Genotype likelihoods")
 )) %>% dplyr::rename("site" = "pop")
 
 

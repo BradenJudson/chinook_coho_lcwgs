@@ -8,3 +8,8 @@ plots/
 data/
 progress.xlsx
 to_do.txt
+*.dcf
+scripts/comparisons_and_figures/supp_figs/
+scripts/comparisons_and_figures/supp_figs/outgenes.R
+scripts/comparisons_and_figures/supp_figs/rda_biplot.R
+scripts/comparisons_and_figures/supp_figs/pcadapt.R
