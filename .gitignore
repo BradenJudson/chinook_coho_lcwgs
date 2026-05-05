@@ -13,3 +13,6 @@ scripts/comparisons_and_figures/supp_figs/
 scripts/comparisons_and_figures/supp_figs/outgenes.R
 scripts/comparisons_and_figures/supp_figs/rda_biplot.R
 scripts/comparisons_and_figures/supp_figs/pcadapt.R
+scripts/comparisons_and_figures/circos.R
+scripts/comparisons_and_figures/circos2.R
+scripts/comparisons_and_figures/11b_homology_assoc.R

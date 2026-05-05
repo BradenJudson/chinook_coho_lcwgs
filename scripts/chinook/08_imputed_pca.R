@@ -37,20 +37,34 @@ imp_pca <- read.table("data/pca_data/chinook_imputed_n819.eigenvec") %>% # Read 
 # Arrange factors with respect to Latitude (orange = south to pink = north)
 imp_pca$region_revised <- reorder(imp_pca$region_revised, imp_pca$mLat)
 
-(pca_plot <- ggplot(data = imp_pca, 
-                   aes(x = PC1, y = PC2,
-                       group = population,
-                       fill = factor(region_revised),
-                       shape = factor(region_revised))) +
-  scale_shape_manual(values = c(rep(c(21,23), 12))) +
-  geom_point(size = 2) + theme_bw() +
-  theme(legend.title = element_blank(),
-        legend.position = "right",
-        legend.text = element_text(size = 10)) +
-  labs(x = paste0("PC1 (", scree$var_exp[1]*100, "%)"),
-       y = paste0("PC2 (", scree$var_exp[2]*100, "%)")) +
-    guides(fill = guide_legend(ncol = 1, reverse = TRUE),
-           shape = guide_legend(ncol =1, reverse = T)) )
+coldf <- imp_pca[,c("region_revised", "plot_col", "plot_shape", "mLat")] %>% 
+  group_by(region_revised) %>% sample_n(1) %>% ungroup()
+
+(pca_plot <- ggplot(data = imp_pca,
+                    aes(x = PC1, y = PC2,
+                        shape = plot_shape,
+                        fill = plot_col)) +
+    geom_point(size = 1.5) +
+    scale_shape_identity(
+      guide = "legend",
+      breaks = coldf$plot_shape,
+      labels = coldf$region_revised,
+      name = NULL
+    ) +
+    scale_fill_identity(
+      guide = "legend",
+      breaks = coldf$plot_col,
+      labels = coldf$region_revised,
+      name = NULL
+    ) + theme_bw() +
+    theme(legend.title = element_blank(),
+          legend.position = "right",
+          legend.text = element_text(size = 10)) +
+    guides(fill  = guide_legend(ncol = 1, reverse = TRUE, override.aes = list(size = 2)),
+           shape = guide_legend(ncol = 1, reverse = TRUE, override.aes = list(size = 2))) +
+    labs(x = paste0("PC1 (", sprintf("%.1f", scree$var_exp[1]*100), "%)"),
+         y = paste0("PC2 (", sprintf("%.1f", scree$var_exp[2]*100), "%)")))
+
 
 ggsave("plots/chinook_pca12_imputed819.tiff", dpi = 300, width = 9, height = 6)
 saveRDS(object = pca_plot, "data/pca_data/chinook_imputed_n819_PCAobj.RDS")

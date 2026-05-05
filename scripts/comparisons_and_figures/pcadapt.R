@@ -95,6 +95,6 @@ ggsave("plots/chinook_imputed_pcadapt_pTop001.tiff", dpi = 200, width = 16, heig
 ggsave("plots/coho_imputed_pcadapt_pTop001.tiff", dpi = 200, width = 16, height = 6)
 
 cowplot::plot_grid(plotlist = list(
-  ch_manh, co_manh),
+  ch_manh + ggtitle("Chinook"), co_manh + ggtitle("Coho")),
   ncol = 1)
 ggsave("plots/imputed_pcadapt_pTop001_bothsp.tiff", dpi = 200, width = 16, height = 10)

@@ -60,6 +60,19 @@ sd(output)
                aes(x = n, y = 1500), inherit.aes = F,
                width = 50, outlier.alpha = 1/4))
 
+
+(hist <- ggplot(data = data.frame(n = unlist(output)),
+                aes(x = n)) +
+    geom_vline(xintercept = nrow(shared_outlier_genes),
+               linetype = 2, colour = "red2", linewidth = 1) +
+    geom_histogram(aes(y = after_stat(density)),
+                   fill = 'gray90', colour = 'gray40',
+                   alpha = 2/3) +
+    geom_density(linewidth = 1/2) +
+    theme_bw() +
+    labs(x = "Genes", y = "Density"))
+
+
 ggsave("plots/shared_genes_test.tiff",
        width = 8, height = 6, dpi = 300)
 

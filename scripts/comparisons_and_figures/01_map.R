@@ -20,12 +20,6 @@ sites <- readxl::read_excel("data/sample_sites.xlsx") %>%
                            !region_revised %in% unique(region_revised)[seq(from = 1, to = length(unique(region_revised)), by = 2)] ~ 1.0))
 
 
-# j <- sites[,c(7,10)] %>% group_by(region_revised) %>%
-#   summarize(mLat2 = mean(mLat)) %>%
-#   arrange(mLat2) %>%
-#   mutate(plot_shape = c(rep(c(21,23), 9), 21)) %>%
-#   mutate(plot_col = hue_pal()(length(unique(sites$region_revised))))
-
 
 #  Arrange regions by average latitude.
 lin <- sites %>% group_by(region_revised) %>% 
@@ -166,9 +160,9 @@ coldf <- data.frame(
     ggspatial::annotation_scale(location = "tl", 
                                 width_hint = 1/10))
 
-(fw <- main + facet_wrap(~ species, nrow = 1))
+(fw <- main + facet_wrap(~ species, ncol = 1))
 
-ggsave("plots/coho_chinook_lcwgs_map.tiff", dpi = 300, width = 14, height = 7, bg = "white")
+ggsave("plots/coho_chinook_lcwgs_map_hz.tiff", dpi = 300, width = 10, height = 8, bg = "white")
 
 # Add another inset, but this one is of North America.
 # Download low-res country outlines.

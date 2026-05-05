@@ -110,5 +110,12 @@ write.csv(co_bio, "data/coho_bioclim.csv")
 ch_bio <- getbioclim(chin)
 write.csv(ch_bio, "data/chinook_bioclim.csv")
 
+j <- read.csv("data/chinook_bioclim_n106.csv") %>% 
+  filter(is.na(ssp)) %>% 
+  dplyr::select(-c(period, ssp)) %>% 
+  column_to_rownames("site")
+j2 <- prcomp(j, scale. = T)
+screeplot(j2, type = "barplot", main = NULL)
+var_explained <- j2$sdev^2 / sum(j2$sdev^2)
 
-
+scatterplot3d(j[1, 1:3])

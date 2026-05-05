@@ -8,20 +8,18 @@ indvs <- readxl::read_excel("data/coho_chinook_samples.xlsx") %>%
   filter(species == "coho") %>% 
   filter(!fate %in% c("Discard (coverage too low)", "Drop (PCA outlier)", "Drop population"))
 
-sites <- read.csv("data/coho_site_info.csv") %>% 
-  group_by(region) %>% mutate(mLat = mean(Latitude))
-# write.csv(sites,"sites.csv")
-
+#Read in site information and format correctly.
 sites <- readxl::read_excel("data/sample_sites.xlsx") %>% 
   filter(species == "coho") %>% 
   group_by(region_revised) %>% 
   mutate(mLat = mean(latitude))
 
+
 unique(indvs[!indvs$population %in% sites$site, "population"])
 unique(sites[!sites$site %in% indvs$population, "site"])
 
 dat <- merge(x = indvs,
-             y = sites[,c("site", "region_revised", "mLat")],
+             y = sites[,c("site", "region_revised", "mLat", "plot_shape", "plot_col")],
              by.x = "population", by.y = "site")
 
 imp_pca <- read.table("data/pca_data/coho_imputed_pca_n650.eigenvec") %>% 
@@ -42,22 +40,35 @@ scree <- read_tsv("data/pca_data/coho_imputed_pca_n650.eigenval",
 # Arrange factors with respect to Latitude (orange = south to pink = north)
 imp_pca$region_revised <- reorder(imp_pca$region_revised, imp_pca$mLat)
 
-(pca_plot <- ggplot(data = imp_pca, 
-                    aes(x = PC1, y = PC2,
-                        group = population,
-                        fill = factor(region_revised),
-                        shape = factor(region_revised))) +
-    scale_shape_manual(values = c(rep(c(21,23), 12))) +
-    # scale_fill_viridis(discrete = T) +
-    geom_point(size = 2) + theme_bw() +
-    # scale_fill_manual(values = alpha(c(coldf$colour), coldf$alpha)) +
+coldf <- imp_pca[,c("region_revised", "plot_col", "plot_shape", "mLat")] %>% 
+  group_by(region_revised) %>% sample_n(1) %>% ungroup()
+
+
+(pca_plot <- ggplot(data = imp_pca,
+       aes(x = PC1, y = PC2,
+           shape = plot_shape,
+           fill = plot_col)) +
+  geom_point(size = 1.5) +
+  scale_shape_identity(
+    guide = "legend",
+    breaks = coldf$plot_shape,
+    labels = coldf$region_revised,
+    name = NULL
+  ) +
+  scale_fill_identity(
+    guide = "legend",
+    breaks = coldf$plot_col,
+    labels = coldf$region_revised,
+    name = NULL
+  ) + theme_bw() +
     theme(legend.title = element_blank(),
           legend.position = "right",
           legend.text = element_text(size = 10)) +
-    labs(x = paste0("PC1 (", scree$var_exp[1]*100, "%)"),
-         y = paste0("PC2 (", scree$var_exp[2]*100, "%)")) +
-    guides(fill = guide_legend(ncol = 1, reverse = TRUE),
-           shape = guide_legend(ncol =1, reverse = T)) )
+    guides(fill  = guide_legend(ncol = 1, reverse = TRUE, override.aes = list(size = 2)),
+           shape = guide_legend(ncol = 1, reverse = TRUE, override.aes = list(size = 2))) +
+    labs(x = paste0("PC1 (", sprintf("%.1f", scree$var_exp[1]*100), "%)"),
+         y = paste0("PC2 (", sprintf("%.1f", scree$var_exp[2]*100), "%)")))
+
 
 saveRDS(object = pca_plot, "data/pca_data/coho_imputed_n650_PCAobj.RDS")
 ggsave("plots/coho_pca12_imputed650.tiff", dpi = 300, width = 9, height = 6)

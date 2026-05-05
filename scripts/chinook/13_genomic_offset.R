@@ -17,6 +17,10 @@ outlier_afs <- read.table("data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/ou
 # Read gradient forest model.
 gradfor <- readRDS("data/gfs/chinook_gforest_19bio2PCA_4bio3rda3SD_afGT_n819.RDS")
 
+data.frame(
+  imp = importance(gradfor, type = "Weighted")
+)
+
 # Assess predictor importance for the GF model.
 png("plots/chinook_gradfor_GTafs_importance_n819.png", width = 2000, height = 1200, res = 250)
 plot(gradfor)

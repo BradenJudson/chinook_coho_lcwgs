@@ -65,7 +65,7 @@ names(full_vect) <- ref_genes
 
 # Create GO object with terms above.
 GOdata <- new("topGOdata",
-              description = out_genes,
+              description = ref_genes,
               ontology = "BP",
               allGenes = full_vect,
               nodeSize = 5,

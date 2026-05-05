@@ -91,6 +91,7 @@ obs_snpoverlap <- \(original, lift_range) {
     `names<-`(., paste0(original$original_chr, "_", original$original_pos))
   
   length(findOverlaps(original_ranges, lift_range))
+  j <- findOverlapPairs(original_ranges, lift_range)
   
 }
 
