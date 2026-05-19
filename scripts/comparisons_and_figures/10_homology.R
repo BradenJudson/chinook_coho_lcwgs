@@ -126,3 +126,12 @@ ggsave("plots/coho_homology_overlap_hist_10kbp.tiff", dpi = 300, width = 8, heig
 (chin_hist <- hist_p(chin_g, chin_obs))
 ggsave("plots/chin_homology_overlap_hist_10kbp.tiff", dpi = 300, width = 8, height = 6)
 
+
+
+# -------------------------------------------------------------------------
+
+
+coho_homSNPs <- as.data.frame(coho_obs@first)
+write.csv(coho_homSNPs, "data/homology/coho_homSNPs.csv")
+chin_homSNPs <- as.data.frame(chin_obs@first)
+write.csv(chin_homSNPs, "data/homology/chin_homSNPs.csv")

@@ -1,11 +1,15 @@
 library(tidyverse)
 set.seed(3190)
 
+out_coho_hom <- read.csv("data/homology/coho_homSNPs.csv")
+out_chin_hom <- read.csv("data/homology/chin_homSNPs.csv")
 
-coho <- read.delim("data/rdas/coho_afsGT_4bioclim_3RDA3SD_n650/RDAoutlier_snp_genes_3RDA3SD2PCA.txt")
+coho <- read.delim("data/rdas/coho_afsGT_4bioclim_3RDA3SD_n650/RDAoutlier_snp_genes_3RDA3SD2PCA.txt") %>% 
+  mutate(SNP = paste0(CHROM, "_", POS)) %>% filter(SNP %in% out_coho_hom$X)
 coho_outlier_genes <- coho %>% filter(!str_detect(gene, "^LOC")) %>% group_by(gene) %>% tally()
 
-chin <- read.delim("data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/RDAoutlier_snp_genes_3RDA3SD2PCA.txt")
+chin <- read.delim("data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/RDAoutlier_snp_genes_3RDA3SD2PCA.txt") %>% 
+  mutate(SNP = paste0(CHROM, "_", POS)) %>% filter(SNP %in% out_chin_hom$X)
 chinook_outlier_genes <- chin %>% filter(!str_detect(gene, "^LOC")) %>% group_by(gene) %>% tally()
 
 shared_outlier_genes <- data.frame(genes = c(chinook_outlier_genes$gene, coho_outlier_genes$gene)) %>% 
@@ -34,7 +38,7 @@ shared <- rbind(
   group_by(gene_id) %>% tally() %>% filter(n > 1)
 
 output <- integer()
-for (i in 1:10000) {
+for (i in 1:1000) {
   
   ch_sample <- sample(x = shared$gene_id, size = nrow(chinook_outlier_genes[chinook_outlier_genes$gene %in% shared$gene_id,]))
   co_sample <- sample(x = shared$gene_id, size = nrow(coho_outlier_genes[coho_outlier_genes$gene %in% shared$gene_id,]))

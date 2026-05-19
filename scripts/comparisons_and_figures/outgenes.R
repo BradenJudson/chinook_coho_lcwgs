@@ -1,10 +1,20 @@
 library(tidyverse); library(ggVennDiagram)
 
-coho <- read.delim("data/rdas/coho_afsGT_4bioclim_3RDA3SD_n650/RDAoutlier_snp_genes_3RDA3SD2PCA.txt")
-chin <- read.delim("data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/RDAoutlier_snp_genes_3RDA3SD2PCA.txt")
+
+out_coho_hom <- read.csv("data/homology/coho_homSNPs.csv")
+out_chin_hom <- read.csv("data/homology/chin_homSNPs.csv")
+
+coho <- read.delim("data/rdas/coho_afsGT_4bioclim_3RDA3SD_n650/RDAoutlier_snp_genes_3RDA3SD2PCA.txt") %>% 
+  mutate(SNP = paste0(CHROM, "_", POS)) %>% filter(SNP %in% out_coho_hom$X)
+
+chin <- read.delim("data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/RDAoutlier_snp_genes_3RDA3SD2PCA.txt") %>% 
+  mutate(SNP = paste0(CHROM, "_", POS)) %>% filter(SNP %in% out_chin_hom$X)
+
+
 
 coho_genes <- unique(coho$gene)
 chin_genes <- unique(chin$gene)
+
 
 out_genes <- do.call("rbind", list(
   data.frame(gene = unique(coho$gene), sp = "coho"),
@@ -113,11 +123,20 @@ for (i in 1:10000) {
   
 }
 
-output[is.na(output)] <- 0
-# shapiro.test(output)
-hist(output,main = NULL)
-mean(output)
-sd(output)
+(hist <- ggplot(data = data.frame(n = unlist(output)),
+               aes(x = n)) + 
+  geom_vline(xintercept = 10,
+             colour = "red2", linetype = 2) +
+  geom_histogram(aes(y = after_stat(density)),
+                 fill = "gray90",
+                 colour = "gray40",
+                 alpha = 2/3,
+                 binwidth = 1) +
+    # geom_density(linewidth = 1/2, adjust = 1) +
+    theme_bw() +
+    labs(x = "Shared genes", y = "Density"))
+
+
 
 
 # -------------------------------------------------------------------------

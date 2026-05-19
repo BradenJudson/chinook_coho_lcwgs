@@ -4,6 +4,7 @@ library(tidyverse)
 
 get_gff_map <- \(x) {
   df <- read.delim(file = x, skip = 9, sep = "\t", header = FALSE) %>% 
+    filter(V3 != "gene") %>% 
     .[,c(1,3:5,9)] %>% 
     `colnames<-`(., c("chrom", "type", "start_pos", "end_pos", "info")) %>% 
     filter(type != "region") %>% 
@@ -57,8 +58,10 @@ for (i in 1:10000) {
   
 }
 
-mean(output)
-2*(1-pnorm(nrow(shared_ortho), mean = mean(output), sd = sd(output)))
+mean(output); nrow(shared_ortho)
+2*pnorm(-abs((nrow(shared_ortho) - mean(output))/sd(output)))
+
+
 
 (hist <- ggplot(data = data.frame(n = unlist(output)),
                 aes(x = n)) +

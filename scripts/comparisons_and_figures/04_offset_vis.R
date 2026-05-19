@@ -48,8 +48,9 @@ f85_bio <- cmip6_world(model = "UKESM1-0-LL", ssp = "585", time = "2041-2060",
 rivers <- read_sf("data/keep_rivers_2.shp")
 
 # Overlay function -------------------------------------------------------------
+
 bound <- terra::ext(c(min(full_sites$longitude)-5, max(full_sites$longitude)+5,
-                      min(full_sites$latitude)-2,  max(full_sites$latitude)+2))
+                      min(full_sites$latitude) -2, max(full_sites$latitude) +2))
 (rast_only <- ggplot() + 
   tidyterra::geom_spatraster(data = terra::crop(f85_bio$bio05, bound), show.legend = T) +
     scale_fill_gradientn(colours = c("#35A052", "#FCFEBB", "red"), 
