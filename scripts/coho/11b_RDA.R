@@ -39,7 +39,7 @@ pcas <- read.csv(file = args[2], row.names = "Pop")
 
 pcas_to_use <- c(read.delim(args[3])[,1])
 
-pcas <- pcas[,c("PC1", "PC2")]
+pcas <- pcas %>% dplyr::select(c(pcas_to_use))
 head(pcas)
 rownames(pcas)
 

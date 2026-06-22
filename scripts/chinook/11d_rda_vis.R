@@ -1,10 +1,9 @@
-
-library(tidyverse); library(viridis); library(ggrepel)
+library(tidyverse)
 
 # ------------------------------------------------------------------------------
 
 # Read in SNP loadings on each axis of the RDA.
-snp_loadings <- read.csv("data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/snp_loadings_full.csv")
+snp_loadings <- read.csv("data/rdas/chinook_afsGT_scaled4bio_3RDA_topMahp001_n819_4bioGF/snp_loadings.csv")
 
 # Visualize distribution of SNP loadings.
 ggplot(data = snp_loadings %>% 
@@ -15,8 +14,11 @@ ggplot(data = snp_loadings %>%
   theme_bw() +
   labs(x = "Loading", y = "Count")
 
-ggsave("plots/rda_loadings_full.tiff", dpi = 300, width = 12, height = 8)
+ggsave("plots/chinook_rda_loadings_full.tiff", dpi = 300, width = 12, height = 8)
 
+
+shapiro.test(sample(snp_loadings$RDA1, 5000))
+shapiro.test(sample(snp_loadings$RDA2, 5000))
 
 # Biplot -----------------------------------------------------------------------
 
@@ -29,12 +31,12 @@ site_info <- readxl::read_excel("data/sample_sites.xlsx") %>%
 coldf <- site_info[,c("region_revised", "plot_col", "plot_shape", "mLat")] %>% 
   group_by(region_revised) %>% sample_n(1) %>% ungroup() %>% arrange(mLat)
 
-site_scores <- read.csv("data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/rda_site_scores.csv", row.names = 1)
+site_scores <- read.csv("data/rdas/chinook_afsGT_scaled4bio_3RDA_topMahp001_n819_4bioGF/rda_site_scores.csv", row.names = 1)
 site_scores <- merge(site_scores, site_info, by.x = 0, by.y = "site")
 site_scores$Lineage <- reorder(site_scores$region_revised, site_scores$latitude)
 
-bio_scores  <- read.csv("data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/rda_bio_scores.csv")
-eigv <- read.delim("data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/rda_eigv.txt", sep = "")
+bio_scores  <- read.csv("data/rdas/chinook_afsGT_scaled4bio_3RDA_topMahp001_n819_4bioGF/rda_bio_scores.csv") 
+eigv <- read.delim("data/rdas/chinook_afsGT_scaled4bio_3RDA_topMahp001_n819_4bioGF/rda_eigv.txt", sep = "")
 
 # Function for visualizing RDA w/ ggplot + tidyverse functions. 
 rda_biplot <- \(x, y) {
@@ -43,13 +45,10 @@ rda_biplot <- \(x, y) {
   
   varx <- paste0(text = enquo(x), " (" , sprintf("%0.1f", 100*c(eigv %>% dplyr::select(1) %>% .[2,])), "%)")[2]
   vary <- paste0(text = enquo(y), " (" , sprintf("%0.1f", 100*c(eigv %>% dplyr::select(2) %>% .[2,])), "%)")[2]
-  
-  bio_scores <- bio_scores %>% mutate(
-    label_x = RDA1 * (scalar + 1),
-    label_y = RDA2 * (scalar + 1),
-    angle = atan2(RDA2*scalar, RDA1*scalar)*180/pi) %>% 
-    mutate(label_y = ifelse(angle > 90 | angle < -90, label_y + 1/2, label_y)) %>% 
-    mutate(angle = ifelse(angle > 90 | angle < -90, angle + 180, angle)) 
+
+  bio_scores <- bio_scores %>% 
+    mutate(label_x = RDA1 * (scalar + 1),
+          label_y = RDA2 * (scalar + 1))
   
   ggplot(data = site_scores,
          aes(x = {{x}},
@@ -77,19 +76,25 @@ rda_biplot <- \(x, y) {
           legend.background = element_blank()) +
     geom_segment(data = bio_scores,
                  aes(x = 0, y = 0,
+                     colour = X,
                      xend = {{x}}*scalar,
                      yend = {{y}}*scalar),
-                 colour = '#0868ac',
+                 # colour = '#0868ac',
                  lineend = "round", 
                  linewidth = 1,
                  arrow = arrow(length = unit(0.1, "inches")),
-                 inherit.aes = FALSE) +
+                 inherit.aes = FALSE,
+                 show.legend = F) +
+    scale_colour_manual(values = c('bio5' = 'firebrick3',
+                                   'bio12' = "blue1",
+                                   'bio1' = 'goldenrod1',
+                                   'bio15' = "forestgreen")) +
+    ggnewscale::new_scale_color() +
     geom_point(size = 2) +
     geom_text(data = bio_scores,
-              aes(x = label_x,
-                  y = label_y,
-                  label = X,
-                  angle = angle), 
+              aes(x = label_x+c(-0.5, -1.4, -0.1, -2.7),
+                  y = label_y+c(-0.2, -0.1, -0.2, -0.08),
+                  label = X), 
               hjust = -0.1, 
               vjust = -0.1,
               inherit.aes = FALSE) +
@@ -103,8 +108,8 @@ rda_biplot <- \(x, y) {
 (rda12 <- rda_biplot(x = RDA1, y = RDA2) +
     scale_x_continuous(expand = expansion(mult = c(0.05, 0.15))))
 
-ggsave("plots/chinook_afsGT_indvbio43RDA3SDbiplot.tiff", 
-       dpi = 300, width = 8, height = 6)
+ggsave("data/rdas/chinook_afsGT_scaled4bio_3RDA_topMahp001_n819_4bioGF/chinook_afsGT_4bio3RDA3SDbiplot.tiff", 
+       dpi = 300, width = 9, height = 6)
 
-saveRDS(rda12, "data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/rda12_biplot.RDS")
+saveRDS(rda12, "data/rdas/chinook_afsGT_scaled4bio_3RDA_topMahp001_n819_4bioGF/rda12_biplot.RDS")
 

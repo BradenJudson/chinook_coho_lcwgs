@@ -9,24 +9,23 @@ set.seed(240)
 
 pops <- read.table("data/chinook_af_rownames_n106.txt", col.names = "pop")
 
-outlier_afs <- read.table("data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/outlier_afs_matrix_afsGT4bio2PCA_n819.txt", 
+outlier_afs <- read.table("data/rdas/chinook_afsGT_4bioclim_2PCA_3RD_Mahp001_n819/outlier_afs_matrix_3RDA4Bio_mahalanobis_k3_top001.txt", 
                           header = T) %>% `rownames<-`(., pops$pop)
 
 # GF ---------------------------------------------------------------------------
 
 # Read gradient forest model.
-gradfor <- readRDS("data/gfs/chinook_gforest_19bio2PCA_4bio3rda3SD_afGT_n819.RDS")
-
-data.frame(
-  imp = importance(gradfor, type = "Weighted")
-)
+gradfor <- readRDS("data/rdas/chinook_afsGT_scaled4bio_3RDA_topMahp001_n819_19bioGF/gforest_4bio_topMAHp001_glAFs_19bioGF.RDS")
 
 # Assess predictor importance for the GF model.
-png("plots/chinook_gradfor_GTafs_importance_n819.png", width = 2000, height = 1200, res = 250)
+png("plots/chinook_gradfor_GTafs_mahp001_importance_n819.png", width = 2000, height = 1200, res = 250)
 plot(gradfor)
 dev.off()
 
-length(colnames(gradfor$Y)) == ncol(outlier_afs)
+# Check that gradient forest and outlier matrix match (same pops and same SNPs in the same order).
+sum(colnames(gradfor$Y) == colnames(outlier_afs)) == ncol(outlier_afs)
+sum(rownames(gradfor$X) == rownames(outlier_afs)) == length(unique(pops$pop))
+
 
 fclim <- \(scenario) {
   
@@ -57,8 +56,7 @@ genomic_offsets <- merge(go26, go45, by = 0) %>%
   merge(., go85, by.y = 0, by.x = "Row.names") %>% 
  dplyr::rename("Site" = Row.names)
 
-write.csv(genomic_offsets, "data/GOs/chinook_offset_19bio3SD_afsGT_2pca_n819.csv", row.names = F)
+write.csv(genomic_offsets, "data/GOs/chinook_offset_4bio3SD_afsGT_2pca_n819.csv", row.names = F)
 write.csv(genomic_offsets, "chin_coho_shiny/data/chinook_offset_19bio3SD_afsGT_2pca_n819.csv", row.names = F)
-# genomic_offsets <- read.csv("data/genomic_offset_19bio3SD_afsGT_2pca_n819.csv")
 
 rm(gradfor); gc()

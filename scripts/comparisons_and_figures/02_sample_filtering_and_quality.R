@@ -1,19 +1,22 @@
 library(tidyverse); library(cowplot)
 
 
+# -------------------------------------------------------------------------
+
+# Read sample information and format.
 data <- readxl::read_excel("data/coho_chinook_samples.xlsx") %>% 
   filter(!fate %in% c("Drop population", "Drop (PCA outlier)"))
 data$final_reads <- as.numeric(data$final_reads)
 data$final_coverage <- as.numeric(data$final_coverage)
 data$species <- tools::toTitleCase(data$species)
 data$seq_batch <- fct_infreq(as.factor(data$seq_batch))
-
 data <- data %>% mutate(fate = case_when(
   downsample_fraction  < 1 & is.na(fate) ~ "Downsample",
   downsample_fraction == 1 ~ "Keep as-is",
   TRUE ~ fate
 ))
 
+# Plot reads vs. coverage function.
 readcov <- \(sp) {
   
   ggplot(data = data[data$species == sp,],
@@ -52,6 +55,7 @@ readcov <- \(sp) {
   
 }
 
+# Remove first legend because they are shared.
 (co <- readcov("Coho") + guides(shape = 'none'))
 (ch <- readcov("Chinook"))
 

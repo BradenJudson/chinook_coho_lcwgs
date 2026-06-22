@@ -1,4 +1,4 @@
-library(tidyverse); library(cowplot); library(pcadapt); library(qvalue)
+library(tidyverse); library(cowplot); library(pcadapt)
 
 # Function for converting VCF to bed (usable by pcadapt).
 # Assumes VCF is gzipped.
@@ -9,8 +9,6 @@ vcf2pc <- \(vcf_file) system(paste("plink.exe --vcf", vcf_file,
 # Make bed files necessary for pcadapt.
 vcf2pc("data/vcfs/chinook_lcwgs_maf005_n819_imputed.vcf.gz")
 vcf2pc("data/vcfs/coho_lcwgs_maf005_n650_imputed.vcf.gz")
-# vcf2pc("data/vcfs_n324/chinook_lcwgs_maf005_n324_imputed.vcf.gz")
-
 
 # Function for conducting pcadapt analyses.
 pcadapt2 <- \(vcf, K, q.alpha) {

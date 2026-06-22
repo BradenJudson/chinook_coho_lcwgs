@@ -3,10 +3,10 @@ library(tidyverse)
 # -------------------------------------------------------------------------
 
 # Read in all SNP loadings. 
-loadings <- read.csv("data/rdas/coho_afsGT_4bioclim_3RDA3SD_n650/snp_loadings_full.csv")
+loadings <- read.csv("data/rdas/coho_afsGL_4bioclim_3RDA3SD_n650/snp_loadings_full.csv")
 
 # Read in outlier frequency matrix.
-outliers <- read.delim("data/outlier_afs_matrix_3RDA4Bio_mahalanobis_k3_top001.txt")
+outliers <- read.delim("data/rdas/coho_afsGL_4bioclim_3RDA3SD_n650/outlier_afs_matrix_afsGL4bio2PCA_n650.txt")
 
 # Isolate SNP loadings for outliers only and convert to long form.
 outlier_loadings <- loadings[loadings$X %in% colnames(outliers),] %>% 
@@ -19,7 +19,7 @@ outlier_loadings <- loadings[loadings$X %in% colnames(outliers),] %>%
 # Clear up some memory.
 rm(loadings); gc()
 
-write.csv(outlier_loadings, "data/rdas/coho_afsGT_4bioclim_3RDA_Mahp001_n650/outlierSNP_loadings_afsGT_n650.csv", row.names = FALSE)
+write.csv(outlier_loadings, "data/rdas/coho_afsGL_4bioclim_3RDA3SD_n650/outlierSNP_loadings_afsGL_n650.csv", row.names = FALSE)
 
 conBio <- read.csv("data/coho_bioclim.csv", row.names = 1) %>% 
   filter(is.na(ssp)) %>% 
@@ -75,7 +75,7 @@ cand_df_cor <- as.data.frame(bioCors) %>%
 
 ggplot(data = cor_grp) + geom_col(aes(x = association, y = prop))
 
-write.csv(cand_df_cor, "data/rdas/coho_afsGT_4bioclim_3RDA_Mahp001_n650/outlier_snp_bio_corrs.csv", row.names = F)
+write.csv(cand_df_cor, "data/rdas/coho_afsGT_4bioclim_3RDA3SD_n650/outlier_snp_bio_corrs.csv", row.names = F)
 
 
 

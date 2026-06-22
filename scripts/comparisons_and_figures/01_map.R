@@ -6,30 +6,28 @@ library(scales); library(cowplot)
 sf_use_s2(T)
 
 # Site info --------------------------------------------------------------------
- 
+
+# Load site information and modify grouping/levels. 
 sites <- readxl::read_excel("data/sample_sites.xlsx") %>% 
   group_by(species, region_revised) %>% 
   mutate(mLat = mean(latitude)) %>% 
   ungroup() %>% 
   group_by(species) %>% 
-  # arrange(mLat) %>% 
   arrange(latitude, .by_group = TRUE) %>% 
   arrange(mLat) %>% 
   mutate(sitenum = row_number(),
          alpha = case_when( region_revised %in% unique(region_revised)[seq(from = 1, to = length(unique(region_revised)), by = 2)] ~ 0.9,
                            !region_revised %in% unique(region_revised)[seq(from = 1, to = length(unique(region_revised)), by = 2)] ~ 1.0))
 
-
-
 #  Arrange regions by average latitude.
 lin <- sites %>% group_by(region_revised) %>% 
   summarize(mLat = mean(latitude)) %>% 
   arrange(mLat)
 
-
 sites$region_revised <- factor(sites$region_revised, levels = lin$region_revised)
 sites$species <- tools::toTitleCase(sites$species)
 
+# Sites as spatial points (for plotting).
 sitesf <- st_as_sf(x = sites, crs = 4326,
                     coords = c("longitude", "latitude"))
 
@@ -62,6 +60,7 @@ rm(USA); rm(prov); gc() # Speeds this up.
 
 # Inset map --------------------------------------------------------------------
 
+# South-central BC as an inset due to the higher density of points.
 (scbc <- sites %>% 
    filter(latitude > 49 & latitude < 56 & longitude < -120 & longitude > -135) %>% 
    st_as_sf(., crs = 4326, coords = c("longitude", "latitude")) %>% 
@@ -76,14 +75,15 @@ scbc_insert <- configure_inset(
   translation = c(-1400, -700)
 )
 
+# Colour dataframe for identity-based aesthetics.
 coldf <- data.frame(
   region = unique(as.character(sites$region_revised)),
   alpha = c(rep(c(0.3, 1), length(unique(sites$region_revised))/2), 0.3),
   colour = hue_pal()(length(unique(sites$region_revised)))
 )
 
+# Plot the main map.
 (main <- ggplot(data = sitesf) +
-    # ggnewscale::new_scale_fill() +
     geom_sf_inset(data = st_make_valid(land),
                   linewidth = 1/20,
                   aes(fill = COUNTRY),
@@ -160,7 +160,8 @@ coldf <- data.frame(
     ggspatial::annotation_scale(location = "tl", 
                                 width_hint = 1/10))
 
-(fw <- main + facet_wrap(~ species, ncol = 1))
+# Facet the main map so there is one panel per species.
+(fw <- main + facet_wrap(~ species, ncol = 2))
 
 ggsave("plots/coho_chinook_lcwgs_map_hz.tiff", dpi = 300, width = 10, height = 8, bg = "white")
 
@@ -192,6 +193,7 @@ me <- map_data("world", "Mexico")
 
 # -------------------------------------------------------------------------
 
+# Overlay the inset map and save.
 (map_ins <- ggdraw(fw) +
    draw_plot(
      ins,

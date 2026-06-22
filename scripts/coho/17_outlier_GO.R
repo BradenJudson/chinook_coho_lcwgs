@@ -44,7 +44,7 @@ gwpgr <- promoters(genegr,
 # -------------------------------------------------------------------------
 
 
-rda_outliers <- read.csv("data/rdas/coho_afsGT_4bioclim_3RDA3SD_n650/outlier_snp_bio_corrs.csv") 
+rda_outliers <- read.csv("data/rdas/coho_afsGT_4bioclim_3RDA_Mahp001_n650/outlier_snp_bio_corrs.csv") 
 
 # Convert outlier SNPs to "regions" (only 1b wide). 
 # Name as unique loci.
@@ -62,7 +62,7 @@ out_snp_genes <- cbind.data.frame(
   mutate( POS = as.numeric(gsub("*.*_", "", snp)),
           CHROM = gsub(".2_.*", ".2", snp))
 
-write.table(out_snp_genes[,c(4,3,2)], "data/rdas/coho_afsGT_4bioclim_3RDA3SD_n650/RDAoutlier_snp_genes_3RDA3SD2PCA.txt",
+write.table(out_snp_genes[,c(4,3,2)], "data/rdas/coho_afsGT_4bioclim_3RDA_Mahp001_n650/RDAoutlier_snp_genes_3RDA3SD2PCA.txt",
             quote = FALSE, row.names = FALSE, sep = "\t")
 
 # -------------------------------------------------------------------------
@@ -90,4 +90,4 @@ GO_results <- as.data.frame(GenTable(GOdata, fishers,
   dplyr::rename(pvalues = result1)
 GO_results$pvalues <- as.numeric(GO_results$pvalues)
 
-write.csv(GO_results, "data/outlier_genes/coho_afsGT_goterms.csv", row.names = F)
+write.csv(GO_results, "data/rdas/coho_afsGT_4bioclim_3RDA_Mahp001_n650/coho_afsGT_goterms.csv", row.names = F)

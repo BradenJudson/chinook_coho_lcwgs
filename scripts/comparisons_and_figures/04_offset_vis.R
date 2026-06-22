@@ -3,12 +3,13 @@ library(tidyverse); library(sf); library(geodata); library(ggnewscale)
 
 # Assemble datasets ------------------------------------------------------------
 
+# Merge site info and GO info for each species.
 chin_sites <- read.csv("data/chin_site_info.csv")
-chin_off   <- read.csv("data/GOs/chinook_offset_19bio3SD_afsGT_2pca_n819.csv")
+chin_off   <- read.csv("data/rdas/chinook_afsGT_scaled4bio_3RDA_topMahp001_n819_19bioGF/genomic_offsets.csv")
 chinook <- merge(chin_sites, chin_off)
 
 coho_sites <- read.csv("data/coho_site_info.csv")
-coho_off   <- read.csv("data/GOs/coho_offset_19bio3SD_afsGTs_1pca_n650.csv")
+coho_off   <- read.csv("data/rdas/coho_afsGT_scaled4bio_3RDA_topMahp001_n650_4bioGF/genomic_offsets.csv")
 coho <- merge(coho_sites, coho_off)
 
 full_sites <- readxl::read_excel("data/sample_sites.xlsx")
@@ -31,8 +32,7 @@ ocean   <- st_difference(x = oceanp1, y = USA, dimension = "polygon")
 # Borders become incomplete if done in a single step.
 rm(oceanp1)
 
-bound <- terra::ext(c(-180, -110, 30, 70))
-
+# Extract global raster files for present and three future scenarios.
 pres_bio <- worldclim_global(var = "bio", res = 5,
                              path = "data/wcdata")
 
@@ -45,12 +45,16 @@ f45_bio <- cmip6_world(model = "UKESM1-0-LL", ssp = "245", time = "2041-2060",
 f85_bio <- cmip6_world(model = "UKESM1-0-LL", ssp = "585", time = "2041-2060",
                        path = "data/fclim85/", res = 5, var = "bio")
 
+# Custom river shapefile for plotting area.
 rivers <- read_sf("data/keep_rivers_2.shp")
 
 # Overlay function -------------------------------------------------------------
 
+# Plotting boundary that extends slightly outside of the plot (for rasters).
 bound <- terra::ext(c(min(full_sites$longitude)-5, max(full_sites$longitude)+5,
                       min(full_sites$latitude) -2, max(full_sites$latitude) +2))
+
+# Get legend for the raster plot separately. Helps later on.
 (rast_only <- ggplot() + 
   tidyterra::geom_spatraster(data = terra::crop(f85_bio$bio05, bound), show.legend = T) +
     scale_fill_gradientn(colours = c("#35A052", "#FCFEBB", "red"), 
@@ -61,13 +65,10 @@ bound <- terra::ext(c(min(full_sites$longitude)-5, max(full_sites$longitude)+5,
           legend.key = element_blank(), legend.position = "right",
           legend.justification = "left", legend.box.just = "left",
           legend.spacing.y = unit(2, "pt")))
-
 (rast_leg <- cowplot::get_legend(rast_only))
   
 
-
-
-
+# Function for plotting offsets and other variables.
 offset_plot <- \(df, variable, cgr_rev, plot_title, abs_cols, brks, rast, LP, rb, rastleg) {
   
   if(rb == TRUE) bound <- terra::ext(c(min(df$Longitude)-5, max(df$Longitude)+5,
@@ -139,28 +140,26 @@ offset_plot <- \(df, variable, cgr_rev, plot_title, abs_cols, brks, rast, LP, rb
 
 # Coho offsets -----------------------------------------------------------------
 
-(coho85 <- offset_plot(coho, variable = go85, rast = f85_bio$bio05,
+(coho85 <- offset_plot(coho_bc, variable = go85, rast = f85_bio$bio05,
                        cgr_rev = FALSE, abs_cols = T, brks = 4, 
                        plot_title = "Genomic offset (ssp85)",
                        LP = c(0.01, 0.8), rb = FALSE, rastleg = FALSE))
-ggsave("plots/off/coho_GO85_19bio3RDA3SD1PCA_afsGT_n650.tiff", bg = 'white',
-       dpi = 300, width = 8, height = 6)
-gc()
+ggsave("plots/off/coho_GO85_19bio3RDA2PCA_top001MAH_afsGT_n650.tiff", bg = 'white',
+       dpi = 300, width = 8, height = 6); gc()
 
 (coho45 <- offset_plot(coho, variable = go45, rast = f45_bio$bio05,
                        cgr_rev = FALSE, abs_cols = T, brks = 4,
                        plot_title = "Genomic offset (ssp45)",
                        LP = c(0.01, 2/3), rb = FALSE))
-ggsave("plots/coho_GO45_19bio3RDA3SD2PCA_afsGT_n650.tiff", bg = 'white',
-       dpi = 300, width = 8, height = 6)
+ggsave("plots/coho_GO45_19bio3RDA2PCA_top001MAH_afsGT_n650.tiff", bg = 'white',
+       dpi = 300, width = 8, height = 6); gc()
 
 (coho26 <- offset_plot(coho, variable = go26, rast = f26_bio$bio05,
                        cgr_rev = FALSE, abs_cols = T, brks = 4,
                        plot_title = "Genomic offset (ssp26)",
                        LP = c(0.01, 2/3), rb = FALSE))
-ggsave("plots/coho_GO26_19bio3RDA3SD2PCA_afsGT_n650.tiff", bg = 'white',
-       dpi = 300, width = 8, height = 6)
-
+ggsave("plots/coho_GO26_19bio3RDA2PCA_top001MAH_afsGT_n650.tiff", bg = 'white',
+       dpi = 300, width = 8, height = 6); gc()
 
 # Chinook offsets --------------------------------------------------------------
 
@@ -169,22 +168,21 @@ ggsave("plots/coho_GO26_19bio3RDA3SD2PCA_afsGT_n650.tiff", bg = 'white',
                        cgr_rev = FALSE, abs_cols = T, brks = 4,
                        plot_title = "Genomic offset (ssp85)",
                        LP = c(0.01, 2/3), rb = FALSE))
-ggsave("plots/off/chinook_GO85_19bio3RDA3SD2PCA_afsGT_n819.tiff", bg = 'white',
-       dpi = 300, width = 8, height = 6)
-gc()
+ggsave("data/rdas/chinook_afsGT_scaled4bio_3RDA_topMahp001_n819_19bioGF/chin_offssp85.tiff", bg = 'white',
+       dpi = 300, width = 8, height = 6); gc()
 
 (chin45 <- offset_plot(chinook, variable = go45, rast = f45_bio$bio05,
                        cgr_rev = FALSE, abs_cols = T, brks = 4,
                        plot_title = "Genomic offset (ssp45)",
                        LP = c(0.01, 0.3), rb = FALSE))
-ggsave("plots/chinook_GO45_19bio3RDA3SD2PCA_afsGT_n819.tiff", bg = 'white',
-       dpi = 300, width = 8, height = 6)
+ggsave("plots/chinook_GO45_19bio3RDA2PCA_afsGT_topMAHp001_n819.tiff", bg = 'white',
+       dpi = 300, width = 8, height = 6); gc()
 
 (chin26 <- offset_plot(chinook, variable = go26, rast = f26_bio$bio05,
                        cgr_rev = FALSE, abs_cols = T, brks = 4,
                        plot_title = "Genomic offset (ssp26)",
                        LP = c(0.01, 0.3), rb = FALSE))
-ggsave("plots/chinook_GO26_19bio3RDA3SD2PCA_afsGT_n819.tiff", bg = 'white',
+ggsave("plots/chinook_GO26_19bio3RDA2PCA_afsGT_topMAHp001_n819.tiff", bg = 'white',
        dpi = 300, width = 8, height = 6)
 
 
@@ -209,7 +207,7 @@ ggsave("plots/chinook_GO26_19bio3RDA3SD2PCA_afsGT_n819.tiff", bg = 'white',
     draw_plot(rast_leg, x = 0.89, y = 0.61, height = 0.4, width = 0.4)),  
   nrow = 1, rel_widths = c(1, 0.943)))
 gc()
-ggsave("plots/off/chin_coho_85.tiff", 
+ggsave("plots/off/chin_coho_85_top001Mah.tiff", 
        dpi = 300, width = 14, height = 6, bg = 'white')
 
 (cohoHet <- offset_plot(coho_hets, variable = het, rast = NULL,
@@ -246,7 +244,48 @@ ggsave("plots/off/chin_coho_het.tiff",
        dpi = 300, width = 14, height = 6, bg = 'white')
 
 
-off <- image_read("plots/off/chin_coho_85.tiff")
+library(magick)
+off <- image_read("plots/off/chin_coho_85_top001Mah.tiff")
 het <- image_read("plots/off/chin_coho_het.tiff")
 mos <- image_append(c(off, het),stack = T)
 image_write(mos, "plots/off/off_het_mos.png", quality = 100)
+
+
+# -------------------------------------------------------------------------
+
+# Below just summarizes genomic offsets by region and plots them.
+sites <- readxl::read_excel("data/sample_sites.xlsx") %>% 
+  group_by(region_revised) %>% mutate(mLat = mean(latitude)) 
+
+
+offsets85 <- rbind(chin_off %>% mutate(sp = "Chinook") %>% 
+                     dplyr::rename("site" = "Site"),
+                   coho_off %>% mutate(sp = "Coho")) %>% 
+  dplyr::select(c("site", "go85", "sp"))
+
+
+full_off <- merge(offsets85, sites) %>% 
+  mutate(region = fct_reorder(region_revised, mLat, .desc = FALSE))
+
+
+(off_plot <- ggplot(data = full_off,
+                    aes(x = region, y = go85,
+                        fill = plot_col)) +
+    geom_point(alpha = 1/2, shape = 21) +
+    scale_fill_identity(guide = "legend",
+                        labels = coldf$region_revised) +
+    geom_boxplot(alpha = 4/5, outliers = FALSE, show.legend = F) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+          plot.margin = unit(c(1,1,1,2), "lines"),
+          legend.position = "none") +
+    labs(x = NULL, y = "Genomic offset (SSP8.5)") +
+    guides(fill  = guide_legend(ncol = 1, reverse = TRUE, override.aes = list(size = 2, alpha = 1)),
+           shape = guide_legend(ncol = 1, reverse = TRUE, override.aes = list(size = 2, alpha = 1))) +
+    facet_wrap(~sp, ncol = 1, scales = "free_y"))
+
+ggsave("plots/regional_off85_imputed.tiff", dpi = 300,
+       width = 8, height = 6, bg = 'white')
+
+
+

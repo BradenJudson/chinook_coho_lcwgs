@@ -71,3 +71,16 @@ saveRDS(object = pca_plot, "data/pca_data/chinook_imputed_n819_PCAobj.RDS")
 pca_dat <- pca_plot@data[,c("id", "population", "region_revised", "mLat", paste0("PC", 1:20))] 
 write.csv(pca_dat, "data/pca_data/chinook_imputed_pca_scores_n819.csv", row.names = F)
 write.csv(pca_dat, "chin_coho_shiny/data/chinook_imputed_pca_scores_n819.csv", row.names = F)
+
+# -------------------------------------------------------------------------
+
+pop_pcas <- pca_dat %>% group_by(population) %>% 
+  summarise(PC1 = mean(PC1),
+            PC2 = mean(PC2),
+            PC3 = mean(PC3),
+            PC4 = mean(PC4)) %>% 
+  dplyr::rename("Pop" = "population")
+
+write.csv(pop_pcas, "data/chinook_pop_meanPCs.csv", row.names = F)
+
+

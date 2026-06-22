@@ -9,11 +9,12 @@
 
 source /gpfs/fs7/grdi/genarcc/wp3/judsonb/miniconda/etc/profile.d/conda.sh
 cd /gpfs/fs7/grdi/genarcc/wp3/judsonb/genome_comp/
-  conda activate ../miniconda/envs/ortho_env/
+conda activate ../miniconda/envs/ortho_env/
   
-  CHIN="../../../common/genomes/Chinook_Salmon/GCF_018296145.1_Otsh_v2.0_genomic"
+CHIN="../../../common/genomes/Chinook_Salmon/GCF_018296145.1_Otsh_v2.0_genomic"
 COHO="../../../common/genomes/Coho_Salmon/GCF_002021735.2_Okis_V2_genomic"
 
+# Keep longest isoform only for each transcript
 agat_sp_keep_longest_isoform.pl --gff "$CHIN".gff -o "$CHIN"_longestisoform.gff
 agat_sp_keep_longest_isoform.pl --gff "$COHO".gff -o "$COHO"_longestisoform.gff
 

@@ -76,4 +76,161 @@ ggsave("plots/coho_go85_corrs.tiff", dpi = 300,
        width = 12, height = 6)
 
 
+# -------------------------------------------------------------------------
+full_sites <- readxl::read_excel("data/sample_sites.xlsx")[,c(7:9)] %>% 
+  group_by(region_revised) %>% summarize(plot_col = unique(plot_col),
+                                         plot_shape = unique(plot_shape))
+
+chin_off_reg <- chinook_data %>% 
+  mutate(rank_off = min_rank(go85))
+  # summarise(m85_ch = mean(go85),
+  #           s85_ch = sd(go85)/sqrt(length(region_revised)))
+coho_off_reg <- coho_data %>%
+  mutate(rank_off = min_rank(go85))
+  # group_by(region_revised) %>% 
+  # summarise(m85_co = mean(go85),
+  #           s85_co = sd(go85)/sqrt(length(region_revised)))
+
+off_reg <- merge(chin_off_reg, coho_off_reg)
+off_can <- off_reg[!off_reg$region_revised %in% c("Alaska", "Coastal Washington", "Southeast Alaska", 
+                                                 "Columbia River (Lower)", "Oregon", "Puget Sound", "Haida Gwaii"),] %>% 
+  merge(., full_sites)
+
+
+
+
+off_can <- off_reg[!off_reg$region_revised %in% c("Columbia River (Lower)", "Puget Sound", "Haida Gwaii", 
+                                                  "Coastal Washington", "Oregon"),] %>% 
+  merge(., full_sites)
+
+
+
+ggplot(data = off_can,
+       aes(x = m85_ch,
+           y = m85_co)) +
+  geom_segment(aes(x = m85_ch - s85_ch,
+                   xend = m85_ch + s85_ch,
+                   y = m85_co, yend = m85_co),
+               inherit.aes = F, show.legend = F) +
+  geom_segment(aes(x = m85_ch, xend = m85_ch,
+                   y = m85_co - s85_co,
+                   yend = m85_co + s85_co),
+               inherit.aes = F, show.legend = F) +
+  geom_smooth(method = "lm", colour = "skyblue",
+              linetype = 2, alpha = 1/6) +
+  geom_point(size = 2, 
+             aes(fill = plot_col,
+                 shape = plot_shape)) +
+  labs(x = "Chinook regional offsets",
+       y = "Coho regional offsets") +
+  theme_bw() +
+  stat_poly_eq(use_label(c("R2", "P"))) +
+  scale_fill_identity(
+    guide = "legend",
+    breaks = off_can$plot_col,
+    labels = off_can$region_revised,
+    name = NULL
+  ) +
+  scale_shape_identity(
+    guide = "legend",
+    breaks = off_can$plot_shape,
+    labels = off_can$region_revised,
+    name = NULL
+  ) +
+  guides(fill  = guide_legend(ncol = 1, reverse = TRUE, override.aes = list(size = 2)),
+         shape = guide_legend(ncol = 1, reverse = TRUE, override.aes = list(size = 2)))
+
+
+ggsave("plots/genomic_offset_regional_corrs.tiff",
+       width = 10, height = 6, bg = 'white', dpi = 300)
+
+j <- rbind(coho_off_reg[,c(1,2,8,11)] %>% mutate(sp = "Coho"),
+           chin_off_reg[,c(1,2,8,11)] %>% mutate(sp = "Chinook") %>% 
+             dplyr::rename("site" = "Site")) 
+
+rr <- c("Columbia River (Interior ocean-type)",
+        "Columbia River (Lower)",
+        "California", "Columbia River (Interior stream-type)",
+        "Haida Gwaii", "Oregon", "Southeast Alaska")
+
+ggplot(data = j[!j$region_revised %in% rr,],
+               aes(x = region_revised,
+                   y = rank_off,
+                   fill = sp)) +
+  geom_boxplot(whisker.linetype =2,
+               outlier.fill = NULL,
+               outlier.shape = 21,
+               outlier.size = 1.5) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1/2),
+        legend.title = element_blank()) +
+  labs(x = NULL) +
+  geom_pwc(
+    method = "wilcox.test",
+    label = "p.format",
+    paired = F
+  ) 
+
+
+
+
+chin_off_reg <- chinook_data %>% 
+  group_by(region_revised) %>% 
+  filter(!region_revised %in% c("Columbia River (Lower)", "Puget Sound", 
+                                "Coastal Washington", "Oregon", "Alaska",
+                                "Southeast Alaska")) %>% 
+  summarise(m85_ch = mean(go85),
+             s85_ch = sd(go85)/sqrt(length(region_revised))) %>% 
+  mutate(rank_off_ch = scales::rescale(m85_ch))
+coho_off_reg <- coho_data %>%
+  group_by(region_revised) %>% 
+  filter(!region_revised %in% c("Columbia River (Lower)", "Puget Sound", 
+                                "Coastal Washington", "Oregon", "Alaska",
+                                "Southeast Alaska")) %>% 
+  summarise(m85_co = mean(go85),
+            s85_co = sd(go85)/sqrt(length(region_revised))) %>% 
+  mutate(rank_off_co = scales::rescale(m85_co))
+
+
+
+off_reg <- merge(chin_off_reg, coho_off_reg) %>% 
+  merge(., full_sites) %>% 
+  filter(!region_revised %in% c("Columbia River (Lower)", "Puget Sound", 
+                               "Coastal Washington", "Oregon", "Alaska"))
+
+ggplot(data = off_reg,
+       aes(x = rank_off_ch,
+           y = rank_off_co)) +
+  # geom_segment(aes(x = m85_ch - s85_ch,
+  #                  xend = m85_ch + s85_ch,
+  #                  y = m85_co, yend = m85_co),
+  #              inherit.aes = F, show.legend = F) +
+  # geom_segment(aes(x = m85_ch, xend = m85_ch,
+  #                  y = m85_co - s85_co,
+  #                  yend = m85_co + s85_co),
+  #              inherit.aes = F, show.legend = F) +
+  geom_smooth(method = "lm", colour = "skyblue",
+              linetype = 2, alpha = 1/6) +
+  geom_point(size = 3, 
+             aes(fill = plot_col,
+                 shape = plot_shape)) +
+  labs(x = "Chinook regional offsets (scaled)",
+       y = "Coho regional offsets (scaled)") +
+  theme_bw() +
+  stat_poly_eq(use_label(c("R2", "P"))) +
+  scale_fill_identity(
+    guide = "legend",
+    breaks = off_reg$plot_col,
+    labels = off_reg$region_revised,
+    name = NULL
+  ) +
+  scale_shape_identity(
+    guide = "legend",
+    breaks = off_reg$plot_shape,
+    labels = off_reg$region_revised,
+    name = NULL
+  ) +
+  guides(fill  = guide_legend(ncol = 1, reverse = TRUE, override.aes = list(size = 2)),
+         shape = guide_legend(ncol = 1, reverse = TRUE, override.aes = list(size = 2)))
+
 

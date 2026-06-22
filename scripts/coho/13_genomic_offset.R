@@ -8,21 +8,22 @@ set.seed(240)
 
 pops <- read.table("data/coho_af_rownames_n83.txt")
 
-outlier_afs <- read.table("data/rdas/coho_afsGT_4bioclim_3RDA3SD_n650/outlier_afs_matrix_afsGT4bio2PCA_n650_2RDAs_3Msnps.txt",
+outlier_afs <- read.table("data/rdas/coho_afsGT_scaled4bio_3RDA_topMahp001_n650_19bioGF/outlier_afs_matrix_3RDA4Bio_mahalanobis_k3_top001.txt",
                           header = TRUE) %>% `rownames<-`(., pops[,1])
 
 # GF ---------------------------------------------------------------------------
 
 # Read gradient forest model.
-gradfor <- readRDS("data/gfs/coho_gForest_19bio2PCA_3SD3RDA_afsGT_n650.RDS")
+gradfor <- readRDS("data/rdas/coho_afsGT_scaled4bio_3RDA_topMahp001_n650_4bioGF/mah_topp001_outliers_GF_4bioclim.RDS")
 
 # Assess predictor importance for the GF model.
-png("plots/gradfor_n650GTafs_importance_19bioGF.png", width = 2000, height = 1200, res = 250)
+png("data/rdas/coho_afsGT_scaled4bio_3RDA_topMahp001_n650_4bioGF/importance_scores.png", 
+    width = 2000, height = 1200, res = 250)
 plot(gradfor)
 dev.off()
 
-length(colnames(gradfor$Y)) == ncol(outlier_afs)
-rownames(gradfor$X) %in% rownames(outlier_afs)
+sum(colnames(gradfor$Y) == colnames(outlier_afs)) == ncol(outlier_afs)
+sum(rownames(gradfor$X) == rownames(outlier_afs)) == length(unique(pops[,1]))
 
 fclim <- \(scenario) {
   
@@ -53,5 +54,5 @@ genomic_offsets <- merge(go26, go45, by = 0) %>%
   merge(., go85, by.x = "Row.names", by.y = 0) %>% 
   dplyr::rename("site" = Row.names)
 
-write.csv(genomic_offsets, "data/GOs/coho_offset_19bio3SD_afsGTs_2pca_n650.csv", row.names = F)
+write.csv(genomic_offsets, "data/GOs/coho_offset_19bioMahtop001_afsGTs_2pca_n650.csv", row.names = F)
 write.csv(genomic_offsets, "chin_coho_shiny/coho_offset_19bio3SD_afsGTs_2pca_n650.csv", row.names = F)

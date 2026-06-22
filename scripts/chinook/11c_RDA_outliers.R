@@ -9,7 +9,11 @@ if (length(args) != 3)
 
 # Install and load necessary packages ------------------------------------------
 
-for (p in c("vegan","tidyverse","data.table")) {
+#install.packages("devtools",  repos = "https://mirror.its.dal.ca/cran", dependencies = T)
+#library("devtools")
+#install_github("jdstorey/qvalue")
+
+for (p in c("vegan","tidyverse","data.table", "robust", "qvalue")) {
   if (!suppressMessages(require(p, character.only = T))) {
     message(paste("Installing:", p))
     install.packages(p, repos = "https://mirror.its.dal.ca/cran", dependencies = T)
@@ -26,6 +30,7 @@ frqpops <- read.table("01_info_files/af_rownames.txt", col.names = "population")
 rownames(freqs) <- frqpops[,1]
 freqs <- freqs %>% dplyr::select(-c("population"))
 dim(freqs)
+
 rownames(freqs)
 
 message("Read allele frequencies")
@@ -40,55 +45,49 @@ message("RDA object loaded")
 
 # Outlier loci -----------------------------------------------------------------
 
-message("Identifying outlier SNPs")
+K <- as.numeric(args[3])
 
-outliers <- function(x,z){
-  lims <- mean(x) + c(-1, 1) * z * sd(x)
-  x[x < lims[1] | x > lims[2]]
+rdadapt <- function(rda, K) {
+  
+  zscores  <- rda$CCA$v[ ,1:as.numeric(K)]
+  resscale <- apply(zscores, 2, scale)
+  resmaha  <- covRob(resscale, distance = TRUE, na.action = na.omit, estim = "pairwiseGK")$dist
+  lambda   <- median(resmaha)/qchisq(0.5, df = K)
+  reschi2test <- pchisq(resmaha/lambda, K, lower.tail = FALSE)
+  qval <- qvalue(reschi2test)
+  q.values_rdadapt <- qval$qvalues
+  
+  return(data.frame(p.values = reschi2test,
+                    q.values = q.values_rdadapt))
 }
 
-axes <- as.numeric(args[3])
 
-loadings <- scores(biorda, choices = c(1:axes), display = 'species')
+out <- rdadapt(biorda, K)
+rownames(out) <- names(biorda$colsum)
+write.csv(out, paste0("rda_mah_rdadapt_k", K, ".csv"), row.names = TRUE, quote = FALSE)
 
-message(paste0("Determining outliers across ", axes, " RDA axes"))
-
-cand_list <- list()
-for (i in 1:axes) {
-  
-  candSNP <- outliers(loadings[,i], z = 3)
-  
-  cand_list[[i]] <- cbind.data.frame(rep(paste0("RDA",i),
-                                         times = length(candSNP)),
-                                     names(candSNP), unname(candSNP))
-  colnames(cand_list[[i]]) <- c("axis", "snp", "loading")
-  
-  if (i > 1) {
-    cand_list[[i]] <- cand_list[[i]] %>%
-      filter(!snp %in% cand_list[[i-1]]$snp)
-  }
-  
-  print(paste0(length(candSNP), " outliers on RDA", i), quote = F)
-  
-}
-
-all_cands <- do.call("rbind", cand_list) %>%
-  separate(col = "snp", sep = 12,
-           into = c("chromosome", "position"), remove = FALSE) %>%
-  mutate(chromosome = as.factor(gsub("_", "", chromosome)))
-
-head(all_cands)
-
-nrow(all_cands)
-
-write.csv(all_cands, "outlier_snps_rda.csv", row.names = FALSE)
+top001 <- out %>%
+  mutate(out = as.factor(case_when(
+    p.values < quantile(p.values, 0.001) ~ "Y",
+    TRUE ~ "N"
+  ))
+  )
 
 # Outlier AF matrix ---------------------------------------------------------------------------
 
 message("Creating outlier allele frequency matrix")
 
-outlier_afs <- freqs[,c(colnames(freqs) %in% c(all_cands$snp))]
+nrow( out[out$p.values < 0.01, ])
+summary(out$q.values)
 
-write.table(outlier_afs, "outlier_afs_matrix_afsGL4bio2PCA_n819.txt", row.names = FALSE, quote = FALSE, sep = "\t")
+outlier_afs <- freqs[,c(colnames(freqs) %in% rownames(top001[top001$out == "Y", ]))]
+
+write.table(outlier_afs, 
+            paste0("outlier_afs_matrix_3RDA4Bio_mahalanobis_k", K, "_top001.txt"), 
+            row.names = FALSE, quote = FALSE, sep = "\t")
 
 message("Done!")
+
+
+
+

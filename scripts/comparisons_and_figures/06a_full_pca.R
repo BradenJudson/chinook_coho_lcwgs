@@ -1,16 +1,16 @@
 library(tidyverse); library(cowplot); library(scales)
 
-ch <- read.csv("data/pca_data/chinook_imputed_pca_scores_n819.csv") %>%
-  mutate(sp = "Chinook", dt = "Imputed")
 
-co <- read.csv("data/pca_data/coho_pca_data_n650_imputed.csv") %>%
-  mutate(sp = "Coho", dt = "Imputed")
+# -------------------------------------------------------------------------
 
+# Read in PCA plot objects from each species' scripts.
 (chin_imp <- readRDS("data/pca_data/chinook_imputed_n819_PCAobj.RDS"))
 (coho_imp <- readRDS("data/pca_data/coho_imputed_n650_PCAobj.RDS"))
 
+# Extract legend.
 leg1 <- cowplot::get_legend(chin_imp)
 
+# Combine all plot elements and save.
 (comb <- cowplot::plot_grid(plotlist = list(
   chin_imp + theme(legend.position = "none", 
                    plot.margin = margin(t = 20, r = 5, b = 5, l = 5, unit = "pt")) +
@@ -26,6 +26,7 @@ ggsave("plots/chinook_coho_imputed_pca.tiff", dpi = 300,
 
 # -------------------------------------------------------------------------
 
+# Basically the same as above, but for the screeplots.
 chsc <- read.delim("data/pca_data/chinook_imputed_n819.eigenval", 
                  col.names = "eigv", header = F) %>% 
   mutate(pvar = eigv/sum(eigv), sp = "Chinook",

@@ -1,10 +1,14 @@
 library(tidyverse)
 
+# -------------------------------------------------------------------------
+
+# Read in heterozygosity information.
 ch <- read.csv("data/heterozygosity_files/chinook_imputed_het_n819.csv") %>% 
   mutate(sp = "Chinook", data = "Imputed")
 co <- read.csv("data/heterozygosity_files/coho_imputed_het_n650.csv") %>% 
   mutate(sp = "Coho", data = "Imputed")
 
+# Average population heterozygosity for Chinook.
 write.csv(ch %>% group_by(population) %>% 
   summarise(mHet = mean(pOHET)), "data/heterozygosity_files/chinook_imputed_popHet_n106.csv")
 
@@ -14,47 +18,51 @@ sites <- readxl::read_excel("data/sample_sites.xlsx") %>%
   group_by(region_revised) %>% mutate(mLat = mean(latitude)) %>% 
   rename("population" = "site") 
 
-
 full_imputed <- left_join(dat, sites) %>% 
-  mutate(region = fct_reorder(region_revised, pOHET, .desc = FALSE))
+  mutate(region = fct_reorder(region_revised, mLat, .desc = FALSE))
+
+coldf <- data.frame(
+  region = unique(as.character(sites$region_revised)),
+  alpha = c(rep(c(0.3, 1), length(unique(sites$region_revised))/2), 0.3),
+  colour = hue_pal()(length(unique(sites$region_revised)))
+)
 
 
-het_plot_reg <- \(df) {
-  
-  (het_plot <- ggplot(data = df,
-                      aes(x = region, y = pOHET,
-                          fill = mLat)) +
-     geom_point(alpha = 1/2, shape = 21) +
-     scale_fill_viridis(name = "Latitude") +
-     geom_boxplot(alpha = 4/5, outliers = FALSE) +
-     theme_bw() +
-     theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
-           plot.margin = unit(c(1,1,1,2), "lines"),
-           legend.position = "inside",
-           legend.position.inside = c(0.045, 1/3),
-           legend.background = element_rect(colour = 'black', linewidth = 1/5)) +
-     labs(x = NULL, y = "Observed Heterozygosity"))
-  
-}
+# Plot heterozygosity by region by species.
+(het_plot <- ggplot(data = full_imputed,
+                    aes(x = region, y = pOHET,
+                        fill = plot_col)) +
+    geom_point(alpha = 1/2, shape = 21) +
+    scale_fill_identity(guide = "legend",
+                        labels = coldf$region_revised) +
+    geom_boxplot(alpha = 4/5, outliers = FALSE, show.legend = F) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+          plot.margin = unit(c(1,1,1,2), "lines"),
+          legend.position = "none",
+          legend.title = element_blank()) +
+    labs(x = NULL, y = "Observed Heterozygosity") +
+    guides(fill  = guide_legend(ncol = 1, reverse = TRUE, override.aes = list(size = 2, alpha = 1)),
+           shape = guide_legend(ncol = 1, reverse = TRUE, override.aes = list(size = 2, alpha = 1))))
 
-(chinook_imp <- het_plot_reg(full_imputed) + 
-    facet_wrap(~sp, ncol = 1))
+
+(impHe <- het_plot + facet_wrap(~sp, ncol = 1))
 ggsave("plots/regional_hets_imputed.tiff", dpi = 300,
-       width = 10, height = 8)
-
+       width = 10, height = 6, bg = 'white')
 
 # -------------------------------------------------------------------------
 
+# Compare imputed and lcWGS heterozygosity estimates by species. 
 gen_div <- do.call("rbind", list(
-  read.csv("data/chinook_imputed_het_n106.csv") %>% 
+  read.csv("data/heterozygosity_files/chinook_imputed_popHet_n106.csv") %>% 
     mutate(species = "Chinook", genotypes = "Imputed genotypes"),
-  read.csv("data/coho_imputed_het_n83.csv") %>% 
+  read.csv("data/heterozygosity_files/coho_imputed_popHet_n83.csv") %>% 
     mutate(species = "Coho", genotypes = "Imputed genotypes"),
-  read.csv("data/chinook_lcwgs_hets_n106.csv", row.names = 1) %>% 
+  read.csv("data/heterozygosity_files/chinook_lcwgs_hets_n819.csv") %>% 
     mutate(species = "Chinook", genotypes = "Genotype likelihoods"),
-  read.csv("data/coho_lcwgs_hets_n83.csv", row.names = 1) %>% 
+  read.csv("data/heterozygosity_files/coho_lcwgs_hets_n650.csv") %>% 
     mutate(species = "Coho", genotypes = "Genotype likelihoods")
-)) %>% pivot_wider(names_from = "genotypes", values_from = "het")
+)) %>% pivot_wider(names_from = "genotypes", values_from = "mHet")
 
 ggplot(data = gen_div, 
        aes(y = `Imputed genotypes`,

@@ -6,7 +6,7 @@ coho <- read.csv("data/coho_site_info.csv", row.names = 1)[,c(2,5:6)] %>%
   filter(!site %in% c("CapilanoEarly", "Seton", "Smith"))
 chin <- read.csv("data/chin_site_info.csv")
 
-getbioclim <- \(sp) {
+getbioclim <- \(sp, return_df) {
   
   # Establish a blank list for populating.
   c.list <- list()
@@ -99,23 +99,17 @@ getbioclim <- \(sp) {
   
   # Put the bioclim data into a single dataframe. 
   biovar <- bind_rows(c.list); head(biovar)
-  return(biovar)
+  return(return_df)
   
 }
 
 
-co_bio <- getbioclim(coho)
+co_bio <- getbioclim(coho, biovar)
 write.csv(co_bio, "data/coho_bioclim.csv")
 
-ch_bio <- getbioclim(chin)
+ch_bio <- getbioclim(chin, biovar)
 write.csv(ch_bio, "data/chinook_bioclim.csv")
 
-j <- read.csv("data/chinook_bioclim_n106.csv") %>% 
-  filter(is.na(ssp)) %>% 
-  dplyr::select(-c(period, ssp)) %>% 
-  column_to_rownames("site")
-j2 <- prcomp(j, scale. = T)
-screeplot(j2, type = "barplot", main = NULL)
-var_explained <- j2$sdev^2 / sum(j2$sdev^2)
 
-scatterplot3d(j[1, 1:3])
+
+

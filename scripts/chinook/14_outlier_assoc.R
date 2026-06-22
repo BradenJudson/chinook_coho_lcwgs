@@ -4,10 +4,10 @@ library(tidyverse)
 # -------------------------------------------------------------------------
 
 # Read in all SNP loadings. 
-loadings <- read.csv("data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/snp_loadings_full.csv")
+loadings <- read.csv("data/rdas/chinook_afsGT_4bioclim_2PCA_3RD_Mahp001_n819/snp_loadings_full.csv")
 
 # Read in outlier frequency matrix.
-outliers <- read.delim("data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/outlier_afs_matrix_afsGT4bio2PCA_n819.txt")
+outliers <- read.delim("data/rdas/chinook_afsGT_4bioclim_2PCA_3RD_Mahp001_n819/outlier_afs_matrix_3RDA4Bio_mahalanobis_k3_top001.txt")
 
 # Isolate SNP loadings for outliers only and convert to long form.
 outlier_loadings <- loadings[loadings$X %in% colnames(outliers),] %>% 
@@ -16,12 +16,6 @@ outlier_loadings <- loadings[loadings$X %in% colnames(outliers),] %>%
                names_to = "axis", 
                values_to = "loading") %>% 
   dplyr::rename("snp" = "X") 
-
-# z <- outlier_loadings %>% 
-#   mutate(chrom = gsub("\\.1_.*", ".1", X),
-#          pos = as.numeric(gsub(".*\\.1_", "", X))) %>% 
-#   rowwise() %>% 
-#   mutate(maxRDA = max(c_across(starts_with("RDA"))))
 
 # Clear up some memory.
 rm(loadings); gc()
@@ -80,4 +74,4 @@ cand_df_cor <- as.data.frame(bioCors) %>%
 # Number of SNP-bioclim associations.
 cand_df_cor %>% group_by(association) %>% tally() %>% mutate(prop = sprintf(n/sum(n)*100, fmt = "%#.2f"))
 
-write.csv(cand_df_cor, "data/rdas/chinook_afsGT_4bioclim_2PCA_3RDA3SD_n819/outlier_snp_corrs.csv", row.names = F)
+write.csv(cand_df_cor, "data/rdas/chinook_afsGT_4bioclim_2PCA_3RD_Mahp001_n819/outlier_snp_corrs.csv", row.names = F)
